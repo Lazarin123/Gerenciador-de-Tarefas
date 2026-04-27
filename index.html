@@ -17,9 +17,7 @@
             --success: #27ae60;
             --warning: #f39c12;
             --danger: #e74c3c;
-            --today-highlight: rgba(0, 31, 63, 0.1); /* Azul marinho suave para o dia atual */
-            
-            /* Novo degradê para os containers */
+            --today-highlight: rgba(0, 31, 63, 0.1);
             --container-gradient: linear-gradient(160deg, #fdfdfd 0%, #f0f2f5 100%);
         }
 
@@ -34,22 +32,21 @@
             padding: 20px;
         }
 
-        /* Container Principal com Degradê */
         .app-container {
             background: var(--container-gradient);
             width: 100%;
             max-width: 1000px;
             min-height: 85vh;
-            border-radius: 20px; /* Bordas mais arredondadas */
+            border-radius: 20px;
             box-shadow: 0 25px 60px rgba(0,0,0,0.5);
             display: flex;
             flex-direction: column;
             overflow: hidden;
-            border: 1px solid rgba(255, 255, 255, 0.6); /* Borda sutil de brilho */
+            border: 1px solid rgba(255, 255, 255, 0.6);
         }
 
         header {
-            background: rgba(255, 255, 255, 0.8); /* Semi-transparente para o degradê de fundo aparecer */
+            background: rgba(255, 255, 255, 0.8);
             padding: 25px;
             border-bottom: 2px solid rgba(0,0,0,0.05);
             display: flex;
@@ -57,7 +54,7 @@
             align-items: center;
             flex-wrap: wrap;
             gap: 15px;
-            backdrop-filter: blur(5px); /* Efeito glass */
+            backdrop-filter: blur(5px);
         }
 
         nav button {
@@ -92,13 +89,13 @@
             justify-content: space-between;
             align-items: center;
             transition: transform 0.2s, box-shadow 0.2s;
+            cursor: pointer;
         }
         .task-card:hover {
             transform: translateY(-2px);
             box-shadow: 0 8px 20px rgba(0,0,0,0.1);
         }
 
-        /* Estilização Customizada do Calendário */
         #calendar { 
             background: rgba(255, 255, 255, 0.9); 
             padding: 20px; 
@@ -107,13 +104,11 @@
             border: 1px solid rgba(0,0,0,0.03);
         }
         
-        /* Destaque do Dia Atual no Calendário */
         .fc-day-today {
             background-color: var(--today-highlight) !important;
             border: 2px solid var(--primary-navy) !important;
         }
 
-        /* Modal */
         .modal {
             display: none;
             position: fixed;
@@ -122,9 +117,9 @@
             justify-content: center;
             align-items: center;
             z-index: 1000;
-            backdrop-filter: blur(8px); /* Blur mais intenso */
+            backdrop-filter: blur(8px);
         }
-        /* Modal com Degradê e Efeito Glass */
+
         .modal-content {
             background: var(--container-gradient);
             padding: 35px;
@@ -151,7 +146,6 @@
         
         .hidden { display: none; }
 
-        /* Estilo dos filtros */
         .filter-box button {
             width: 100%;
             margin-bottom: 8px;
@@ -168,25 +162,23 @@
             border-color: #ccc;
         }
 
-        /* Estilo do Botão Mudar */
         .btn-change {
-        background: var(--metal-gray);
-        color: white;
-        padding: 10px 20px;
-        border: none;
-        border-radius: 8px;
-        cursor: pointer;
-        font-weight: 600;
-        transition: all 0.3s ease;
-        display: flex;
-        align-items: center;
-        gap: 8px;
+            background: var(--metal-gray);
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
-
-    .btn-change:hover {
-    background: var(--primary-navy);
-    transform: translateX(3px);
-    }
+        .btn-change:hover {
+            background: var(--primary-navy);
+            transform: translateX(3px);
+        }
     </style>
 </head>
 <body>
@@ -194,9 +186,9 @@
     <div class="app-container">
         <header>
             <h2 style="color: var(--primary-navy); letter-spacing: -1px;">Fluxo de Tarefas</h2>
-                <button class="btn-change" onclick="irParaCaminho()">
+            <button class="btn-change" onclick="irParaCaminho()">
                 Mudar <span>→</span>
-                </button>
+            </button>
             <nav id="main-nav">
                 <button onclick="switchTab('list')" class="active">Lista</button>
                 <button onclick="switchTab('calendar')">Calendário</button>
@@ -255,8 +247,16 @@
         </div>
     </div>
 
+    <div class="modal" id="viewTaskModal">
+        <div class="modal-content">
+            <h3 id="viewTitle" style="margin-bottom: 10px; color: var(--primary-navy);"></h3>
+            <p style="color: #666; margin-bottom: 15px;"><small id="viewDates"></small></p>
+            <div id="viewDesc" style="background: rgba(255,255,255,0.5); padding: 15px; border-radius: 8px; min-height: 100px; margin-bottom: 20px; border: 1px solid rgba(0,0,0,0.05); color: #333; white-space: pre-wrap;"></div>
+            <button type="button" onclick="closeViewModal()" class="btn-add" style="width: 100%;">Fechar</button>
+        </div>
+    </div>
+
     <script>
-        // O JavaScript permanece EXATAMENTE o mesmo
         let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
         let calendar;
         let myChart;
@@ -281,6 +281,20 @@
 
         function openModal() { document.getElementById('taskModal').style.display = 'flex'; }
         function closeModal() { document.getElementById('taskModal').style.display = 'none'; }
+
+        function showTaskDetails(id) {
+            const task = tasks.find(t => t.id === id);
+            if (task) {
+                document.getElementById('viewTitle').innerText = task.title;
+                document.getElementById('viewDates').innerText = `Início: ${task.start} | Prazo: ${task.end}`;
+                document.getElementById('viewDesc').innerText = task.desc || "Sem descrição informada.";
+                document.getElementById('viewTaskModal').style.display = 'flex';
+            }
+        }
+
+        function closeViewModal() {
+            document.getElementById('viewTaskModal').style.display = 'none';
+        }
 
         document.getElementById('taskForm').onsubmit = (e) => {
             e.preventDefault();
@@ -324,14 +338,15 @@
                 const div = document.createElement('div');
                 div.className = 'task-card';
                 if(task.completed) div.style.opacity = '0.5';
+                
                 div.innerHTML = `
-                    <div>
+                    <div onclick="showTaskDetails(${task.id})" style="flex-grow: 1;">
                         <strong style="color:#222">${task.title}</strong><br>
                         <small style="color:#666">📅 Finaliza em: ${task.end}</small>
                     </div>
-                    <div>
-                        <button onclick="toggleTask(${task.id})" style="font-size:22px; border:none; background:none; cursor:pointer; color: var(--primary-navy)">${task.completed ? '✅' : '⭕'}</button>
-                        <button onclick="deleteTask(${task.id})" style="font-size:18px; border:none; background:none; cursor:pointer; margin-left:12px; color: var(--danger)">🗑️</button>
+                    <div style="display: flex; align-items: center;">
+                        <button onclick="event.stopPropagation(); toggleTask(${task.id})" style="font-size:22px; border:none; background:none; cursor:pointer; color: var(--primary-navy)">${task.completed ? '✅' : '⭕'}</button>
+                        <button onclick="event.stopPropagation(); deleteTask(${task.id})" style="font-size:18px; border:none; background:none; cursor:pointer; margin-left:12px; color: var(--danger)">🗑️</button>
                     </div>
                 `;
                 container.appendChild(div);
@@ -401,13 +416,16 @@
         }
 
         function irParaCaminho() {
-    // Adicione o caminho da sua nova página ou URL aqui
-    const caminho = href="./gerenciador-tarefas.html"; 
-    
-    window.location.href = caminho;
-    }
+            window.location.href = "gerenciador-tarefas.html";
+        }
 
         function filterTasks(f) { renderTasks(f); }
+
+        window.onclick = function(event) {
+            if (event.target.className === 'modal') {
+                event.target.style.display = 'none';
+            }
+        }
     </script>
 </body>
 </html>
