@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gerenciador de Tarefas</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --navy: #0d1b2a;
+    --navy-mid: #1a2d45;
+    --steel: #6b7280;
+    --steel-light: #9ca3af;
+    --steel-lighter: #d1d5db;
+    --metal: #4b5563;
+    --metal-dark: #374151;
+    --card-bg: rgba(255,255,255,0.07);
+    --card-border: rgba(255,255,255,0.12);
+    --input-bg: rgba(255,255,255,0.06);
+    --text-primary: #f1f5f9;
+    --text-secondary: #94a3b8;
+    --text-muted: #64748b;
+    --accent: #60a5fa;
+    --accent-dim: rgba(96,165,250,0.15);
+    --success: #34d399;
+    --success-dim: rgba(52,211,153,0.12);
+    --danger: #f87171;
+    --danger-dim: rgba(248,113,113,0.12);
+    --warning: #fbbf24;
+    --radius: 14px;
+    --radius-sm: 8px;
+    --shadow: 0 8px 32px rgba(0,0,0,0.35);
+    --shadow-sm: 0 2px 12px rgba(0,0,0,0.2);
+  }
+
+  body {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #0d1b2a 0%, #1a2d45 30%, #2d3748 60%, #4a5568 85%, #6b7280 100%);
+    font-family: 'DM Sans', sans-serif;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 40px 16px 60px;
+    color: var(--text-primary);
+  }
+
+  .app {
+    width: 100%;
+    max-width: 600px;
+  }
+
+  .header {
+    text-align: center;
+    margin-bottom: 32px;
+  }
+
+  .header-icon {
+    width: 56px;
+    height: 56px;
+    background: rgba(96,165,250,0.15);
+    border: 1px solid rgba(96,165,250,0.3);
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 16px;
+    backdrop-filter: blur(8px);
+  }
+
+  .header-icon svg { width: 28px; height: 28px; stroke: #60a5fa; fill: none; stroke-width: 1.8; }
+
+  h1 {
+    font-size: clamp(1.5rem, 4vw, 2rem);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    color: var(--text-primary);
+    margin-bottom: 6px;
+  }
+
+  .subtitle {
+    font-size: 14px;
+    color: var(--text-secondary);
+    font-weight: 300;
+  }
+
+  .card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius);
+    backdrop-filter: blur(16px);
+    box-shadow: var(--shadow);
+  }
+
+  .add-section {
+    padding: 20px;
+    margin-bottom: 12px;
+  }
+
+  .input-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+
+  .task-input {
+    flex: 1;
+    background: var(--input-bg);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: var(--radius-sm);
+    padding: 12px 16px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    color: var(--text-primary);
+    outline: none;
+    transition: border-color 0.2s, background 0.2s;
+  }
+
+  .task-input::placeholder { color: var(--text-muted); }
+
+  .task-input:focus {
+    border-color: rgba(96,165,250,0.4);
+    background: rgba(255,255,255,0.09);
+  }
+
+  .add-btn {
+    background: var(--accent);
+    color: #0d1b2a;
+    border: none;
+    border-radius: var(--radius-sm);
+    padding: 12px 18px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+  }
+
+  .add-btn:hover { background: #93c5fd; }
+  .add-btn:active { transform: scale(0.97); }
+  .add-btn svg { width: 16px; height: 16px; stroke: #0d1b2a; fill: none; stroke-width: 2.5; }
+
+  .meta-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .priority-select, .date-input {
+    background: var(--input-bg);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: var(--radius-sm);
+    padding: 8px 12px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    color: var(--text-primary);
+    outline: none;
+    cursor: pointer;
+    transition: border-color 0.2s;
+    appearance: none;
+  }
+
+  .priority-select:focus, .date-input:focus { border-color: rgba(96,165,250,0.4); }
+
+  .priority-select option { background: #1e2d3d; color: var(--text-primary); }
+
+  .date-input::-webkit-calendar-picker-indicator {
+    filter: invert(0.6);
+    cursor: pointer;
+  }
+
+  .filter-bar {
+    display: flex;
+    gap: 4px;
+    padding: 4px;
+    background: rgba(0,0,0,0.2);
+    border-radius: 10px;
+    margin-bottom: 12px;
+  }
+
+  .filter-btn {
+    flex: 1;
+    background: transparent;
+    border: none;
+    border-radius: 7px;
+    padding: 8px 12px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+  }
+
+  .filter-btn.active {
+    background: rgba(96,165,250,0.2);
+    color: var(--accent);
+  }
+
+  .stats-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+
+  .stat {
+    flex: 1;
+    background: rgba(0,0,0,0.15);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: var(--radius-sm);
+    padding: 10px;
+    text-align: center;
+  }
+
+  .stat-num {
+    font-size: 20px;
+    font-weight: 600;
+    line-height: 1;
+    margin-bottom: 3px;
+  }
+
+  .stat-num.total { color: var(--text-primary); }
+  .stat-num.done { color: var(--success); }
+  .stat-num.pending { color: var(--warning); }
+
+  .stat-label {
+    font-size: 10px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-weight: 500;
+  }
+
+  .tasks-section { padding: 0 20px 20px; }
+
+  .progress-bar {
+    height: 4px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 999px;
+    margin-bottom: 16px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--success));
+    border-radius: 999px;
+    transition: width 0.4s ease;
+  }
+
+  .task-list { display: flex; flex-direction: column; gap: 6px; }
+
+  .task-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: var(--radius-sm);
+    transition: all 0.2s;
+    animation: slideIn 0.25s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .task-item:hover {
+    background: rgba(255,255,255,0.07);
+    border-color: rgba(255,255,255,0.12);
+  }
+
+  .task-item.done { opacity: 0.55; }
+  .task-item.done .task-text { text-decoration: line-through; color: var(--text-muted); }
+
+  .priority-stripe {
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    border-radius: 8px 0 0 8px;
+  }
+
+  .priority-stripe.alta { background: var(--danger); }
+  .priority-stripe.media { background: var(--warning); }
+  .priority-stripe.baixa { background: var(--success); }
+
+  .check-btn {
+    width: 22px;
+    height: 22px;
+    min-width: 22px;
+    border-radius: 50%;
+    border: 1.5px solid rgba(255,255,255,0.2);
+    background: transparent;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    margin-left: 6px;
+  }
+
+  .check-btn:hover { border-color: var(--success); background: var(--success-dim); }
+
+  .check-btn.checked {
+    background: var(--success);
+    border-color: var(--success);
+  }
+
+  .check-btn svg { width: 12px; height: 12px; stroke: #fff; fill: none; stroke-width: 2.5; }
+
+  .task-body { flex: 1; min-width: 0; }
+
+  .task-text {
+    font-size: 14px;
+    font-weight: 400;
+    color: var(--text-primary);
+    line-height: 1.4;
+    word-break: break-word;
+  }
+
+  .task-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 4px;
+    flex-wrap: wrap;
+  }
+
+  .badge {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: 999px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .badge.alta { background: var(--danger-dim); color: var(--danger); border: 1px solid rgba(248,113,113,0.2); }
+  .badge.media { background: rgba(251,191,36,0.12); color: var(--warning); border: 1px solid rgba(251,191,36,0.2); }
+  .badge.baixa { background: var(--success-dim); color: var(--success); border: 1px solid rgba(52,211,153,0.2); }
+
+  .task-date {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-family: 'DM Mono', monospace;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+  }
+
+  .task-date svg { width: 10px; height: 10px; stroke: currentColor; fill: none; stroke-width: 2; }
+
+  .task-date.overdue { color: var(--danger); }
+
+  .del-btn {
+    width: 28px;
+    height: 28px;
+    min-width: 28px;
+    border-radius: 6px;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    opacity: 0;
+  }
+
+  .task-item:hover .del-btn { opacity: 1; }
+  .del-btn:hover { background: var(--danger-dim); color: var(--danger); }
+  .del-btn svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; }
+
+  .empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-muted);
+  }
+
+  .empty-state svg { width: 40px; height: 40px; stroke: currentColor; fill: none; stroke-width: 1.2; margin-bottom: 12px; opacity: 0.5; }
+  .empty-state p { font-size: 14px; }
+
+  .clear-btn {
+    width: 100%;
+    background: rgba(248,113,113,0.08);
+    border: 1px solid rgba(248,113,113,0.15);
+    border-radius: var(--radius-sm);
+    padding: 10px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--danger);
+    cursor: pointer;
+    margin-top: 12px;
+    transition: all 0.2s;
+    display: none;
+  }
+
+  .clear-btn:hover { background: rgba(248,113,113,0.15); }
+  .clear-btn.visible { display: block; }
+
+  @media (max-width: 480px) {
+    body { padding: 20px 12px 40px; }
+    .stats-row { gap: 6px; }
+    .meta-row { flex-direction: column; }
+    .priority-select, .date-input { width: 100%; }
+    .del-btn { opacity: 1; }
+  }
+
+  /* Estilo do Botão Mudar */
+.btn-change {
+    background: var(--metal-gray);
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-change:hover {
+    background: var(--primary-navy);
+    transform: translateX(3px);
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+    <button class="btn-change" onclick="irParaCaminho()">
+      <span>←</span>Voltar 
+    </button>
+
+  <div class="header">
+    <div class="header-icon">
+      <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M9 12l2 2 4-4"/><rect x="3" y="4" width="18" height="18" rx="3"/>
+        <path d="M3 9h18"/>
+      </svg>
+    </div>
+    <h1>Gerenciador de Tarefas</h1>
+    <p class="subtitle">Organize seu dia com simplicidade</p>
+  </div>
+
+  <div class="card">
+    <div class="add-section">
+      <div class="input-row">
+        <input class="task-input" id="taskInput" type="text" placeholder="Adicionar nova tarefa..." maxlength="120">
+        <button class="add-btn" onclick="addTask()">
+          <svg viewBox="0 0 24 24" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Adicionar
+        </button>
+      </div>
+      <div class="meta-row">
+        <select class="priority-select" id="prioritySelect">
+          <option value="media">Prioridade: Média</option>
+          <option value="alta">Prioridade: Alta</option>
+          <option value="baixa">Prioridade: Baixa</option>
+        </select>
+        <input class="date-input" type="date" id="dateInput" title="Data limite">
+      </div>
+    </div>
+
+    <div style="padding: 0 20px 16px;">
+      <div class="stats-row">
+        <div class="stat"><div class="stat-num total" id="statTotal">0</div><div class="stat-label">Total</div></div>
+        <div class="stat"><div class="stat-num pending" id="statPending">0</div><div class="stat-label">Pendentes</div></div>
+        <div class="stat"><div class="stat-num done" id="statDone">0</div><div class="stat-label">Concluídas</div></div>
+      </div>
+      <div class="filter-bar">
+        <button class="filter-btn active" onclick="setFilter('all', this)">Todas</button>
+        <button class="filter-btn" onclick="setFilter('pending', this)">Pendentes</button>
+        <button class="filter-btn" onclick="setFilter('done', this)">Concluídas</button>
+        <button class="filter-btn" onclick="setFilter('alta', this)">Alta</button>
+      </div>
+    </div>
+
+    <div class="tasks-section">
+      <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+      <div class="task-list" id="taskList"></div>
+      <div class="empty-state" id="emptyState">
+        <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="4" width="18" height="18" rx="3"/>
+          <path d="M3 9h18M9 14h6M9 18h4"/>
+        </svg>
+        <p>Nenhuma tarefa por aqui.<br>Adicione sua primeira tarefa acima.</p>
+      </div>
+      <button class="clear-btn" id="clearDoneBtn" onclick="clearDone()">Limpar tarefas concluídas</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  let tasks = JSON.parse(localStorage.getItem('tasks_v1') || '[]');
+  let filter = 'all';
+
+  const taskInput = document.getElementById('taskInput');
+  const prioritySelect = document.getElementById('prioritySelect');
+  const dateInput = document.getElementById('dateInput');
+  const taskList = document.getElementById('taskList');
+  const emptyState = document.getElementById('emptyState');
+  const clearDoneBtn = document.getElementById('clearDoneBtn');
+
+  taskInput.addEventListener('keydown', e => { if (e.key === 'Enter') addTask(); });
+
+  function save() { localStorage.setItem('tasks_v1', JSON.stringify(tasks)); }
+
+  function addTask() {
+    const text = taskInput.value.trim();
+    if (!text) { taskInput.focus(); shake(taskInput); return; }
+    tasks.unshift({
+      id: Date.now(),
+      text,
+      priority: prioritySelect.value,
+      date: dateInput.value,
+      done: false,
+      createdAt: new Date().toISOString()
+    });
+    taskInput.value = '';
+    save();
+    render();
+  }
+
+  function toggle(id) {
+    const t = tasks.find(t => t.id === id);
+    if (t) { t.done = !t.done; save(); render(); }
+  }
+
+  function remove(id) {
+    tasks = tasks.filter(t => t.id !== id);
+    save(); render();
+  }
+
+  function clearDone() {
+    tasks = tasks.filter(t => !t.done);
+    save(); render();
+  }
+
+  function setFilter(f, btn) {
+    filter = f;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    render();
+  }
+
+  function shake(el) {
+    el.style.animation = 'none';
+    el.offsetHeight;
+    el.style.animation = 'shake 0.3s ease';
+    setTimeout(() => el.style.animation = '', 300);
+  }
+
+  function formatDate(str) {
+    if (!str) return '';
+    const [y, m, d] = str.split('-');
+    return `${d}/${m}/${y}`;
+  }
+
+  function isOverdue(str) {
+    if (!str) return false;
+    return new Date(str + 'T23:59:59') < new Date();
+  }
+
+  function render() {
+    let visible = tasks;
+    if (filter === 'pending') visible = tasks.filter(t => !t.done);
+    else if (filter === 'done') visible = tasks.filter(t => t.done);
+    else if (filter === 'alta') visible = tasks.filter(t => t.priority === 'alta');
+
+    const total = tasks.length;
+    const done = tasks.filter(t => t.done).length;
+    const pending = total - done;
+
+    document.getElementById('statTotal').textContent = total;
+    document.getElementById('statDone').textContent = done;
+    document.getElementById('statPending').textContent = pending;
+    document.getElementById('progressFill').style.width = total ? (done / total * 100) + '%' : '0%';
+
+    const hasDone = tasks.some(t => t.done);
+    clearDoneBtn.classList.toggle('visible', hasDone);
+
+    if (visible.length === 0) {
+      taskList.innerHTML = '';
+      emptyState.style.display = 'block';
+      return;
+    }
+
+    emptyState.style.display = 'none';
+
+    taskList.innerHTML = visible.map(t => `
+      <div class="task-item ${t.done ? 'done' : ''}" id="task-${t.id}">
+        <div class="priority-stripe ${t.priority}"></div>
+        <button class="check-btn ${t.done ? 'checked' : ''}" onclick="toggle(${t.id})">
+          ${t.done ? `<svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>` : ''}
+        </button>
+        <div class="task-body">
+          <div class="task-text">${escHtml(t.text)}</div>
+          <div class="task-meta">
+            <span class="badge ${t.priority}">${t.priority === 'alta' ? 'Alta' : t.priority === 'media' ? 'Média' : 'Baixa'}</span>
+            ${t.date ? `<span class="task-date ${!t.done && isOverdue(t.date) ? 'overdue' : ''}">
+              <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>
+              </svg>
+              ${formatDate(t.date)}${!t.done && isOverdue(t.date) ? ' · Vencida' : ''}
+            </span>` : ''}
+          </div>
+        </div>
+        <button class="del-btn" onclick="remove(${t.id})" title="Remover">
+          <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/>
+          </svg>
+        </button>
+      </div>
+    `).join('');
+  }
+
+  function escHtml(str) {
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  const style = document.createElement('style');
+  style.textContent = `@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}`;
+  document.head.appendChild(style);
+
+  function irParaCaminho() {
+    // Adicione o caminho da sua nova página ou URL aqui
+    const caminho = './index.html'; 
+    
+    window.location.href = caminho;
+}
+
+  render();
+</script>
+</body>
+</html>

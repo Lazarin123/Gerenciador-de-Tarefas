@@ -167,6 +167,26 @@
             background: #f0f0f0;
             border-color: #ccc;
         }
+
+        /* Estilo do Botão Mudar */
+        .btn-change {
+        background: var(--metal-gray);
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        }
+
+    .btn-change:hover {
+    background: var(--primary-navy);
+    transform: translateX(3px);
+    }
     </style>
 </head>
 <body>
@@ -174,6 +194,9 @@
     <div class="app-container">
         <header>
             <h2 style="color: var(--primary-navy); letter-spacing: -1px;">Fluxo de Tarefas</h2>
+                <button class="btn-change" onclick="irParaCaminho()">
+                Mudar <span>→</span>
+                </button>
             <nav id="main-nav">
                 <button onclick="switchTab('list')" class="active">Lista</button>
                 <button onclick="switchTab('calendar')">Calendário</button>
@@ -376,6 +399,13 @@
                 events: tasks.map(t => ({ title: t.title, start: t.start, end: t.end, color: t.completed ? '#27ae60' : '#001f3f' }))
             });
         }
+
+        function irParaCaminho() {
+    // Adicione o caminho da sua nova página ou URL aqui
+    const caminho = href="./gerenciador-tarefas.html"; 
+    
+    window.location.href = caminho;
+    }
 
         function filterTasks(f) { renderTasks(f); }
     </script>
