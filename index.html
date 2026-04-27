@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerenciador Pro - Vollup Tech</title>
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
+    
+    <style>
+        :root {
+            --primary-navy: #001f3f;
+            --metal-gray: #708090;
+            --light-gray: #f4f4f4;
+            --accent-gray: #333;
+            --success: #27ae60;
+            --warning: #f39c12;
+            --danger: #e74c3c;
+            --today-highlight: rgba(0, 31, 63, 0.1); /* Azul marinho suave para o dia atual */
+            
+            /* Novo degradê para os containers */
+            --container-gradient: linear-gradient(160deg, #fdfdfd 0%, #f0f2f5 100%);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, var(--primary-navy) 0%, var(--metal-gray) 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        /* Container Principal com Degradê */
+        .app-container {
+            background: var(--container-gradient);
+            width: 100%;
+            max-width: 1000px;
+            min-height: 85vh;
+            border-radius: 20px; /* Bordas mais arredondadas */
+            box-shadow: 0 25px 60px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.6); /* Borda sutil de brilho */
+        }
+
+        header {
+            background: rgba(255, 255, 255, 0.8); /* Semi-transparente para o degradê de fundo aparecer */
+            padding: 25px;
+            border-bottom: 2px solid rgba(0,0,0,0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            backdrop-filter: blur(5px); /* Efeito glass */
+        }
+
+        nav button {
+            padding: 10px 18px;
+            border: none;
+            background: #e0e0e0;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: 0.3s;
+            color: var(--accent-gray);
+        }
+
+        nav button.active { background: var(--primary-navy); color: white; }
+
+        .main-content { padding: 25px; flex-grow: 1; overflow-y: auto; }
+        
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 25px;
+        }
+
+        .task-card {
+            background: white;
+            padding: 18px;
+            margin-bottom: 15px;
+            border-radius: 12px;
+            border-left: 6px solid var(--metal-gray);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.06);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .task-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+        }
+
+        /* Estilização Customizada do Calendário */
+        #calendar { 
+            background: rgba(255, 255, 255, 0.9); 
+            padding: 20px; 
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            border: 1px solid rgba(0,0,0,0.03);
+        }
+        
+        /* Destaque do Dia Atual no Calendário */
+        .fc-day-today {
+            background-color: var(--today-highlight) !important;
+            border: 2px solid var(--primary-navy) !important;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            backdrop-filter: blur(8px); /* Blur mais intenso */
+        }
+        /* Modal com Degradê e Efeito Glass */
+        .modal-content {
+            background: var(--container-gradient);
+            padding: 35px;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 500px;
+            border: 1px solid rgba(255, 255, 255, 0.7);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+            position: relative;
+        }
+
+        input, textarea {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: 1px solid rgba(0,0,0,0.1);
+            border-radius: 8px;
+            outline-color: var(--primary-navy);
+            background: rgba(255, 255, 255, 0.8);
+        }
+
+        .btn-add { background: var(--primary-navy); color: white; padding: 12px 25px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: background 0.3s; }
+        .btn-add:hover { background: #002d5c; }
+        
+        .hidden { display: none; }
+
+        /* Estilo dos filtros */
+        .filter-box button {
+            width: 100%;
+            margin-bottom: 8px;
+            padding: 10px;
+            cursor: pointer;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            background: white;
+            transition: 0.2s;
+            font-weight: 500;
+        }
+        .filter-box button:hover {
+            background: #f0f0f0;
+            border-color: #ccc;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        <header>
+            <h2 style="color: var(--primary-navy); letter-spacing: -1px;">Fluxo de Tarefas</h2>
+            <nav id="main-nav">
+                <button onclick="switchTab('list')" class="active">Lista</button>
+                <button onclick="switchTab('calendar')">Calendário</button>
+                <button onclick="switchTab('stats')">Gráficos</button>
+            </nav>
+            <button class="btn-add" onclick="openModal()">+ Nova Tarefa</button>
+        </header>
+
+        <main class="main-content">
+            <div id="tab-list" class="tab-content">
+                <div class="dashboard-grid">
+                    <div id="task-items"></div>
+                    <div style="background: rgba(255, 255, 255, 0.7); padding: 20px; border-radius: 12px; height: fit-content; border: 1px solid rgba(0,0,0,0.03);" class="filter-box">
+                        <h4 style="margin-bottom:15px; color: var(--accent-gray);">Filtros Rápidos</h4>
+                        <button onclick="filterTasks('all')">📋 Todas</button>
+                        <button onclick="filterTasks('pending')">⏳ Pendentes</button>
+                        <button onclick="filterTasks('done')">✅ Concluídas</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="tab-calendar" class="tab-content hidden">
+                <div id="calendar"></div>
+            </div>
+
+            <div id="tab-stats" class="tab-content hidden">
+                <div style="max-width: 400px; margin: 0 auto; text-align: center;">
+                    <h3 style="margin-bottom: 20px; color: var(--accent-gray);">Progresso Geral</h3>
+                    <canvas id="taskChart"></canvas>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div class="modal" id="taskModal">
+        <div class="modal-content">
+            <h3 style="margin-bottom: 15px; color: var(--primary-navy);">Nova Tarefa</h3>
+            <form id="taskForm">
+                <input type="text" id="title" placeholder="O que vamos fazer?" required>
+                <textarea id="desc" rows="3" placeholder="Descrição ou notas..."></textarea>
+                <div style="display:flex; gap:10px">
+                    <div style="flex:1">
+                        <label><small>Início</small></label>
+                        <input type="date" id="dateStart" required>
+                    </div>
+                    <div style="flex:1">
+                        <label><small>Prazo Final</small></label>
+                        <input type="date" id="dateEnd" required>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 10px; margin-top: 25px;">
+                    <button type="submit" class="btn-add">Salvar Tarefa</button>
+                    <button type="button" onclick="closeModal()" style="background:#ddd; border:none; padding:12px 20px; border-radius:8px; cursor:pointer; font-weight:500; color:#333;">Sair</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // O JavaScript permanece EXATAMENTE o mesmo
+        let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+        let calendar;
+        let myChart;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            renderTasks();
+            initChart();
+            initCalendar();
+        });
+
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.add('hidden'));
+            document.querySelectorAll('#main-nav button').forEach(b => b.classList.remove('active'));
+            document.getElementById(`tab-${tab}`).classList.remove('hidden');
+            if(event) event.target.classList.add('active');
+            
+            if(tab === 'calendar') {
+                setTimeout(() => calendar.render(), 50);
+            }
+            if(tab === 'stats') updateChart();
+        }
+
+        function openModal() { document.getElementById('taskModal').style.display = 'flex'; }
+        function closeModal() { document.getElementById('taskModal').style.display = 'none'; }
+
+        document.getElementById('taskForm').onsubmit = (e) => {
+            e.preventDefault();
+            const newTask = {
+                id: Date.now(),
+                title: document.getElementById('title').value,
+                desc: document.getElementById('desc').value,
+                start: document.getElementById('dateStart').value,
+                end: document.getElementById('dateEnd').value,
+                completed: false
+            };
+            tasks.push(newTask);
+            saveAndRefresh();
+            closeModal();
+            e.target.reset();
+        };
+
+        function saveAndRefresh() {
+            localStorage.setItem('tasks', JSON.stringify(tasks));
+            renderTasks();
+            updateChart();
+            if(calendar) {
+                calendar.removeAllEvents();
+                calendar.addEventSource(tasks.map(t => ({ 
+                    title: t.title, 
+                    start: t.start, 
+                    end: t.end, 
+                    color: t.completed ? '#27ae60' : '#001f3f' 
+                })));
+            }
+        }
+
+        function renderTasks(filter = 'all') {
+            const container = document.getElementById('task-items');
+            container.innerHTML = '';
+            let filtered = tasks;
+            if(filter === 'pending') filtered = tasks.filter(t => !t.completed);
+            if(filter === 'done') filtered = tasks.filter(t => t.completed);
+
+            filtered.forEach(task => {
+                const div = document.createElement('div');
+                div.className = 'task-card';
+                if(task.completed) div.style.opacity = '0.5';
+                div.innerHTML = `
+                    <div>
+                        <strong style="color:#222">${task.title}</strong><br>
+                        <small style="color:#666">📅 Finaliza em: ${task.end}</small>
+                    </div>
+                    <div>
+                        <button onclick="toggleTask(${task.id})" style="font-size:22px; border:none; background:none; cursor:pointer; color: var(--primary-navy)">${task.completed ? '✅' : '⭕'}</button>
+                        <button onclick="deleteTask(${task.id})" style="font-size:18px; border:none; background:none; cursor:pointer; margin-left:12px; color: var(--danger)">🗑️</button>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function toggleTask(id) {
+            tasks = tasks.map(t => t.id === id ? {...t, completed: !t.completed} : t);
+            saveAndRefresh();
+        }
+
+        function deleteTask(id) {
+            if(confirm("Tem certeza que deseja excluir esta tarefa?")) {
+                tasks = tasks.filter(t => t.id !== id);
+                saveAndRefresh();
+            }
+        }
+
+        function initChart() {
+            const ctx = document.getElementById('taskChart').getContext('2d');
+            myChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Concluído', 'Pendente'],
+                    datasets: [{
+                        data: [0, 0],
+                        backgroundColor: ['#27ae60', '#001f3f'],
+                        borderWidth: 0
+                    }]
+                },
+                options: { 
+                    plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 13 } } } },
+                    cutout: '75%'
+                }
+            });
+            updateChart();
+        }
+
+        function updateChart() {
+            const done = tasks.filter(t => t.completed).length;
+            const pending = tasks.length - done;
+            if(myChart) {
+                myChart.data.datasets[0].data = [done, pending];
+                myChart.update();
+            }
+        }
+
+        function initCalendar() {
+            const calendarEl = document.getElementById('calendar');
+            calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                locale: 'pt-br',
+                nowIndicator: true,
+                dayMaxEvents: true,
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,timeGridWeek'
+                },
+                buttonText: {
+                    today: 'Hoje',
+                    month: 'Mês',
+                    week: 'Semana'
+                },
+                events: tasks.map(t => ({ title: t.title, start: t.start, end: t.end, color: t.completed ? '#27ae60' : '#001f3f' }))
+            });
+        }
+
+        function filterTasks(f) { renderTasks(f); }
+    </script>
+</body>
+</html>
